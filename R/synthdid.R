@@ -198,10 +198,10 @@ synthdid_effect_curve = function(estimate) {
   setup = attr(estimate, 'setup')
   weights = attr(estimate, 'weights')
   X.beta = contract3(setup$X, weights$beta)
-  N1 = nrow(setup$Y) - setup$N0
   T1 = ncol(setup$Y) - setup$T0
 
-  tau.sc = t(c(-weights$omega, rep(1 / N1, N1))) %*% (setup$Y - X.beta)
+  omega.target = weights$omega_treated
+  tau.sc = t(c(-weights$omega, omega.target)) %*% (setup$Y - X.beta)
   tau.curve = tau.sc[setup$T0 + (1:T1)] - c(tau.sc[1:setup$T0] %*% weights$lambda)
   tau.curve
 }
