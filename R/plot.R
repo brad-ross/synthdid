@@ -90,9 +90,9 @@ synthdid_plot = function(estimates, treated.name = 'treated', control.name = 'sy
     T0 = setup$T0; T1 = ncol(Y) - T0
 
     lambda.synth = c(weights$lambda, rep(0, T1))
-    lambda.target = c(rep(0, T0), rep(1 / T1, T1))
+    lambda.target = c(rep(0, T0), weights$lambda_post)
     omega.synth = c(weights$omega, rep(0, N1))
-    omega.target = c(rep(0, N0), rep(1 / N1, N1))
+    omega.target = c(rep(0, N0), weights$omega_treated)
 
     # pull estimate-specific overlay from attribute if present
     # if we're given a synthetic control estimate or overlay is one, take note: we'll plot it differently
