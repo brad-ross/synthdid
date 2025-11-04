@@ -16,7 +16,7 @@ synthdid_estimate(
   zeta.lambda = eta.lambda * noise.level,
   omega.intercept = TRUE,
   lambda.intercept = TRUE,
-  weights = list(omega = NULL, lambda = NULL),
+  weights = list(omega = NULL, lambda = NULL, omega_treated = NULL, lambda_post = NULL),
   update.omega = is.null(weights$omega),
   update.lambda = is.null(weights$lambda),
   min.decrease = 1e-05 * noise.level,
@@ -48,8 +48,12 @@ synthdid_estimate(
 
 \item{lambda.intercept}{Binary. Use an intercept when estimating lambda.}
 
-\item{weights}{a list with fields lambda and omega. If non-null weights$lambda is passed,
-we use them instead of estimating lambda weights. Same for weights$omega.}
+\item{weights}{a list with optional fields \code{lambda}, \code{omega}, \code{omega_treated}, and \code{lambda_post}.
+If non-null \code{weights$lambda} is passed, we use it instead of estimating lambda weights. The same
+logic applies to \code{weights$omega} for control-unit weights. The optional target weights
+\code{weights$omega_treated} (length N1) and \code{weights$lambda_post} (length T1) let you specify the
+treated-unit and post-treatment period averages to target; both default to uniform weights on their
+respective simplices when omitted.}
 
 \item{update.omega}{If true, solve for omega using the passed value of weights$omega only as an initialization.
 If false, use it exactly as passed. Defaults to false if a non-null value of weights$omega is passed.}
@@ -70,8 +74,8 @@ Not used if sparsify=NULL.}
 }
 \value{
 An average treatment effect estimate with 'weights' and 'setup' attached as attributes.
-'weights' contains the estimated weights lambda and omega and corresponding intercepts,
-as well as regression coefficients beta if X is passed.
+'weights' contains the estimated weights lambda and omega, the target weights omega_treated and
+lambda_post, and corresponding intercepts, as well as regression coefficients beta if X is passed.
 'setup' is a list describing the problem passed in: Y, N0, T0, X.
 }
 \description{

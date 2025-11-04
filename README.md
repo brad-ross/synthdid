@@ -43,6 +43,24 @@ sprintf('95%% CI (%1.2f, %1.2f)', tau.hat - 1.96 * se, tau.hat + 1.96 * se)
 plot(tau.hat)
 ```
 
+### Custom target weights
+
+You can target any weighted average of treated units and post-treatment periods by
+passing `omega_treated` and `lambda_post` through the `weights` argument. They default
+to uniform weights.
+
+```R
+treated_weights <- c(0.7, 0.3)
+post_weights <- c(0.2, 0.8)
+
+tau.custom <- synthdid_estimate(
+  setup$Y,
+  setup$N0,
+  setup$T0,
+  weights = list(omega_treated = treated_weights, lambda_post = post_weights)
+)
+```
+
 #### References
 Dmitry Arkhangelsky, Susan Athey, David A. Hirshberg, Guido W. Imbens, and Stefan Wager.
 <b>Synthetic Difference in Differences</b>, 2019.
