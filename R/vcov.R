@@ -48,6 +48,8 @@ bootstrap_sample = function(estimate, replications) {
     setup = attr(estimate, 'setup')
     opts = attr(estimate, 'opts')
     weights = attr(estimate, 'weights')
+    N1 = nrow(setup$Y) - setup$N0
+    omega_treated_base = if (is.null(weights$omega_treated)) { rep(1 / N1, N1) } else { weights$omega_treated }
     if (setup$N0 == nrow(setup$Y) - 1) { return(NA) }
     theta = function(ind) {
 	if(all(ind <= setup$N0) || all(ind > setup$N0)) { NA }
@@ -56,9 +58,9 @@ bootstrap_sample = function(estimate, replications) {
 	    weights.boot$omega = sum_normalize(weights$omega[sort(ind[ind <= setup$N0])])
 	    treated.ind = sort(ind[ind > setup$N0])
 	    if (length(treated.ind) == 0) {
-	      weights.boot$omega_treated = weights$omega_treated
+	      weights.boot$omega_treated = omega_treated_base
 	    } else {
-	      weights.boot$omega_treated = sum_normalize(weights$omega_treated[treated.ind - setup$N0])
+	      weights.boot$omega_treated = sum_normalize(omega_treated_base[treated.ind - setup$N0])
 	    }
 	    do.call(synthdid_estimate, c(list(Y=setup$Y[sort(ind),], N0=sum(ind <= setup$N0), T0=setup$T0, X=setup$X[sort(ind), ,], weights=weights.boot), opts))
 	}
@@ -83,15 +85,17 @@ jackknife_se = function(estimate, weights = attr(estimate, 'weights')) {
       opts$update.omega = opts$update.lambda = FALSE
     }
     if (setup$N0 == nrow(setup$Y) - 1 || (!is.null(weights) && sum(weights$omega != 0) == 1)) { return(NA) }
+    N1 = nrow(setup$Y) - setup$N0
+    omega_treated_base = if (is.null(weights$omega_treated)) { rep(1 / N1, N1) } else { weights$omega_treated }
     theta = function(ind) {
 	weights.jk = weights
 	if (!is.null(weights)) {
 	  weights.jk$omega = sum_normalize(weights$omega[ind[ind <= setup$N0]])
 	  treated.ind = ind[ind > setup$N0]
 	  if (length(treated.ind) == 0) {
-	    weights.jk$omega_treated = weights$omega_treated
+	    weights.jk$omega_treated = omega_treated_base
 	  } else {
-	    weights.jk$omega_treated = sum_normalize(weights$omega_treated[treated.ind - setup$N0])
+	    weights.jk$omega_treated = sum_normalize(omega_treated_base[treated.ind - setup$N0])
 	  }
 	}
 	estimate.jk = do.call(synthdid_estimate,
@@ -124,6 +128,7 @@ placebo_se = function(estimate, replications) {
     opts = attr(estimate, 'opts')
     weights = attr(estimate, 'weights')
     N1 = nrow(setup$Y) - setup$N0
+    omega_treated_base = if (is.null(weights$omega_treated)) { rep(1 / N1, N1) } else { weights$omega_treated }
     if (setup$N0 <= N1) { stop('must have more controls than treated units to use the placebo se') }
     theta = function(ind) {
 	N0 = length(ind)-N1
@@ -131,9 +136,9 @@ placebo_se = function(estimate, replications) {
 	weights.boot$omega = sum_normalize(weights$omega[ind[1:N0]])
 	treated.ind = ind[(N0 + 1):length(ind)]
 	if (length(treated.ind) == 0) {
-	  weights.boot$omega_treated = weights$omega_treated
+	  weights.boot$omega_treated = omega_treated_base
 	} else {
-	  weights.boot$omega_treated = sum_normalize(weights$omega_treated[treated.ind - setup$N0])
+	  weights.boot$omega_treated = sum_normalize(omega_treated_base[treated.ind - setup$N0])
 	}
         do.call(synthdid_estimate, c(list(Y=setup$Y[ind,], N0=N0,  T0=setup$T0,  X=setup$X[ind, ,], weights=weights.boot), opts))
     }

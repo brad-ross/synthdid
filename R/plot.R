@@ -90,9 +90,11 @@ synthdid_plot = function(estimates, treated.name = 'treated', control.name = 'sy
     T0 = setup$T0; T1 = ncol(Y) - T0
 
     lambda.synth = c(weights$lambda, rep(0, T1))
-    lambda.target = c(rep(0, T0), weights$lambda_post)
+    lambda.post.weights = if (is.null(weights$lambda_post)) { rep(1 / T1, T1) } else { weights$lambda_post }
+    omega.treated.weights = if (is.null(weights$omega_treated)) { rep(1 / N1, N1) } else { weights$omega_treated }
+    lambda.target = c(rep(0, T0), lambda.post.weights)
     omega.synth = c(weights$omega, rep(0, N1))
-    omega.target = c(rep(0, N0), weights$omega_treated)
+    omega.target = c(rep(0, N0), omega.treated.weights)
 
     # pull estimate-specific overlay from attribute if present
     # if we're given a synthetic control estimate or overlay is one, take note: we'll plot it differently
@@ -316,9 +318,11 @@ synthdid_units_plot = function(estimates, negligible.threshold = .001, negligibl
     T0 = setup$T0; T1 = ncol(Y) - T0
 
     lambda.pre = c(weights$lambda, rep(0, T1))
-    lambda.post = c(rep(0, T0), weights$lambda_post)
+    lambda.post.weights = if (is.null(weights$lambda_post)) { rep(1 / T1, T1) } else { weights$lambda_post }
+    omega.treated.weights = if (is.null(weights$omega_treated)) { rep(1 / N1, N1) } else { weights$omega_treated }
+    lambda.post = c(rep(0, T0), lambda.post.weights)
     omega.control = c(weights$omega, rep(0, N1))
-    omega.treat = c(rep(0, N0), weights$omega_treated)
+    omega.treat = c(rep(0, N0), omega.treated.weights)
     difs = as.vector(t(omega.treat) %*% Y %*% (lambda.post - lambda.pre)) - as.vector(Y[1:N0, ] %*% (lambda.post - lambda.pre))
     se = if (se.method == 'none') { NA } else { sqrt(vcov(estimate, method=se.method)) }
     include.units = if(is.null(units)) { 1:N0 } else { which(rownames(Y)[1:N0] %in% units) }
