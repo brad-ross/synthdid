@@ -90,13 +90,18 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
   weights$omega_treated = normalize_target_weights(weights$omega_treated, N1, 'omega_treated')
   weights$lambda_post = normalize_target_weights(weights$lambda_post, T1, 'lambda_post')
 
+  lambda_init = weights[['lambda']]
+  omega_init = weights[['omega']]
+  weights$lambda = lambda_init
+  weights$omega = omega_init
+
   if (dim(X)[3] == 0) {
     Yc = collapsed.form.weighted(Y, N0, T0, weights$omega_treated, weights$lambda_post)
     weights$vals = NULL
     weights$lambda.vals = NULL
     weights$omega.vals = NULL
     if (update.lambda) {
-      lambda.opt = sc.weight.fw(Yc[1:N0, ], zeta = zeta.lambda, intercept = lambda.intercept, lambda=weights$lambda,
+      lambda.opt = sc.weight.fw(Yc[1:N0, ], zeta = zeta.lambda, intercept = lambda.intercept, lambda=lambda_init,
 				min.decrease = min.decrease, max.iter = max.iter.pre.sparsify)
       if(!is.null(sparsify)) {
 	lambda.opt = sc.weight.fw(Yc[1:N0, ], zeta = zeta.lambda, intercept = lambda.intercept, lambda=sparsify(lambda.opt$lambda),
@@ -107,7 +112,7 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
       weights$vals = lambda.opt$vals
     }
     if (update.omega) {
-      omega.opt = sc.weight.fw(t(Yc[, 1:T0]), zeta = zeta.omega, intercept = omega.intercept, lambda=weights$omega,
+      omega.opt = sc.weight.fw(t(Yc[, 1:T0]), zeta = zeta.omega, intercept = omega.intercept, lambda=omega_init,
 			       min.decrease = min.decrease, max.iter = max.iter.pre.sparsify)
       if(!is.null(sparsify)) {
 	omega.opt = sc.weight.fw(t(Yc[, 1:T0]), zeta = zeta.omega, intercept = omega.intercept, lambda=sparsify(omega.opt$lambda),
@@ -125,10 +130,15 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
     }
     Xc = apply(X, 3, collapse_covariate)
     dim(Xc) = c(dim(Yc), dim(X)[3])
+    target_weights = list(omega_treated = weights$omega_treated, lambda_post = weights$lambda_post)
     weights = sc.weight.fw.covariates(Yc, Xc, zeta.lambda = zeta.lambda, zeta.omega = zeta.omega,
       lambda.intercept = lambda.intercept, omega.intercept = omega.intercept,
       min.decrease = min.decrease, max.iter = max.iter,
-      lambda = weights$lambda, omega = weights$omega, update.lambda = update.lambda, update.omega = update.omega)
+      lambda = lambda_init, omega = omega_init, update.lambda = update.lambda, update.omega = update.omega)
+    if (is.null(weights$lambda)) { weights$lambda = lambda_init }
+    if (is.null(weights$omega)) { weights$omega = omega_init }
+    weights$omega_treated = target_weights$omega_treated
+    weights$lambda_post = target_weights$lambda_post
   }
 
   X.beta = contract3(X, weights$beta)

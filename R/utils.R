@@ -30,8 +30,8 @@ collapsed.form.weighted = function(Y, N0, T0, omega_treated, lambda_post) {
   treated_post = Y[(N0 + 1):N, (T0 + 1):T, drop = FALSE]
 
   top_right = controls_post %*% lambda_post
-  bottom_left = t(omega_treated %*% treated_pre)
-  bottom_right = as.numeric(omega_treated %*% treated_post %*% lambda_post)
+  bottom_left = matrix(omega_treated %*% treated_pre, nrow = 1)
+  bottom_right = matrix(omega_treated %*% treated_post %*% lambda_post, nrow = 1)
 
   rbind(cbind(controls_pre, top_right), cbind(bottom_left, bottom_right))
 }

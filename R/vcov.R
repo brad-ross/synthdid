@@ -134,12 +134,7 @@ placebo_se = function(estimate, replications) {
 	N0 = length(ind)-N1
 	weights.boot = weights
 	weights.boot$omega = sum_normalize(weights$omega[ind[1:N0]])
-	treated.ind = ind[(N0 + 1):length(ind)]
-	if (length(treated.ind) == 0) {
-	  weights.boot$omega_treated = omega_treated_base
-	} else {
-	  weights.boot$omega_treated = sum_normalize(omega_treated_base[treated.ind - setup$N0])
-	}
+	weights.boot$omega_treated = omega_treated_base
         do.call(synthdid_estimate, c(list(Y=setup$Y[ind,], N0=N0,  T0=setup$T0,  X=setup$X[ind, ,], weights=weights.boot), opts))
     }
     sqrt((replications-1)/replications) * sd(replicate(replications, theta(sample(1:setup$N0))))
