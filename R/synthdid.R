@@ -86,11 +86,11 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
   weights$lambda_post = normalize_target_weights(weights$lambda_post, T1, 'lambda_post')
 
   if (dim(X)[3] == 0) {
+    Yc = collapsed.form.weighted(Y, N0, T0, weights$omega_treated, weights$lambda_post)
     weights$vals = NULL
     weights$lambda.vals = NULL
     weights$omega.vals = NULL
     if (update.lambda) {
-      Yc = collapsed.form(Y, N0, T0)
       lambda.opt = sc.weight.fw(Yc[1:N0, ], zeta = zeta.lambda, intercept = lambda.intercept, lambda=weights$lambda,
 				min.decrease = min.decrease, max.iter = max.iter.pre.sparsify)
       if(!is.null(sparsify)) {
@@ -102,7 +102,6 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
       weights$vals = lambda.opt$vals
     }
     if (update.omega) {
-      Yc = collapsed.form(Y, N0, T0)
       omega.opt = sc.weight.fw(t(Yc[, 1:T0]), zeta = zeta.omega, intercept = omega.intercept, lambda=weights$omega,
 			       min.decrease = min.decrease, max.iter = max.iter.pre.sparsify)
       if(!is.null(sparsify)) {
@@ -115,8 +114,11 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
       else { weights$vals = pairwise.sum.decreasing(weights$vals, omega.opt$vals) }
     }
   } else {
-    Yc = collapsed.form(Y, N0, T0)
-    Xc = apply(X, 3, function(Xi) { collapsed.form(Xi, N0, T0) })
+    Yc = collapsed.form.weighted(Y, N0, T0, weights$omega_treated, weights$lambda_post)
+    collapse_covariate = function(Xi) {
+      collapsed.form.weighted(Xi, N0, T0, weights$omega_treated, weights$lambda_post)
+    }
+    Xc = apply(X, 3, collapse_covariate)
     dim(Xc) = c(dim(Yc), dim(X)[3])
     weights = sc.weight.fw.covariates(Yc, Xc, zeta.lambda = zeta.lambda, zeta.omega = zeta.omega,
       lambda.intercept = lambda.intercept, omega.intercept = omega.intercept,
