@@ -50,3 +50,17 @@ test_that("panel.matrices works as expected", {
   panel[panel$State =="Kansas" & panel$Year >=1988, "treated"] = 1
   expect_error(panel.matrices(panel), "The package cannot use this data. Treatment adoption is not simultaneous.")
 })
+
+test_that("collapsed.form.weighted matches collapsed.form under uniform weights", {
+  set.seed(234)
+  N0 = 4; N1 = 3; T0 = 5; T1 = 2
+  Y = matrix(rnorm((N0 + N1) * (T0 + T1)), nrow = N0 + N1)
+
+  omega_uniform = rep(1 / N1, N1)
+  lambda_uniform = rep(1 / T1, T1)
+
+  collapsed_uniform = collapsed.form(Y, N0, T0)
+  collapsed_weighted = collapsed.form.weighted(Y, N0, T0, omega_uniform, lambda_uniform)
+
+  expect_equal(collapsed_weighted, collapsed_uniform)
+})

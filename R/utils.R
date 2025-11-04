@@ -5,6 +5,37 @@ collapsed.form = function(Y, N0, T0) {
     cbind(t(colMeans(Y[(N0 + 1):N, 1:T0, drop = FALSE])), mean(Y[(N0 + 1):N, (T0 + 1):T, drop = FALSE])))
 }
 
+collapsed.form.weighted = function(Y, N0, T0, omega_treated, lambda_post) {
+  N = nrow(Y); T = ncol(Y)
+  N1 = N - N0
+  T1 = T - T0
+
+  stopifnot(length(omega_treated) == N1, length(lambda_post) == T1)
+
+  omega_treated = as.numeric(omega_treated)
+  lambda_post = as.numeric(lambda_post)
+
+  omega_sum = sum(omega_treated)
+  lambda_sum = sum(lambda_post)
+  if (omega_sum == 0 || lambda_sum == 0) {
+    stop('omega_treated and lambda_post must each sum to a positive value')
+  }
+
+  omega_treated = omega_treated / omega_sum
+  lambda_post = lambda_post / lambda_sum
+
+  controls_pre = Y[1:N0, 1:T0, drop = FALSE]
+  controls_post = Y[1:N0, (T0 + 1):T, drop = FALSE]
+  treated_pre = Y[(N0 + 1):N, 1:T0, drop = FALSE]
+  treated_post = Y[(N0 + 1):N, (T0 + 1):T, drop = FALSE]
+
+  top_right = controls_post %*% lambda_post
+  bottom_left = t(omega_treated %*% treated_pre)
+  bottom_right = as.numeric(omega_treated %*% treated_post %*% lambda_post)
+
+  rbind(cbind(controls_pre, top_right), cbind(bottom_left, bottom_right))
+}
+
 # return the component-wise sum of decreasing vectors in which NA is taken to mean that the vector has stopped decreasing
 # and we can use the last non-na element. Where both are NA, leave as NA.
 pairwise.sum.decreasing = function(x, y) {
