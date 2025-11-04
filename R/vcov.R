@@ -54,6 +54,12 @@ bootstrap_sample = function(estimate, replications) {
 	else {
 	    weights.boot = weights
 	    weights.boot$omega = sum_normalize(weights$omega[sort(ind[ind <= setup$N0])])
+	    treated.ind = sort(ind[ind > setup$N0])
+	    if (length(treated.ind) == 0) {
+	      weights.boot$omega_treated = weights$omega_treated
+	    } else {
+	      weights.boot$omega_treated = sum_normalize(weights$omega_treated[treated.ind - setup$N0])
+	    }
 	    do.call(synthdid_estimate, c(list(Y=setup$Y[sort(ind),], N0=sum(ind <= setup$N0), T0=setup$T0, X=setup$X[sort(ind), ,], weights=weights.boot), opts))
 	}
     }
@@ -79,7 +85,15 @@ jackknife_se = function(estimate, weights = attr(estimate, 'weights')) {
     if (setup$N0 == nrow(setup$Y) - 1 || (!is.null(weights) && sum(weights$omega != 0) == 1)) { return(NA) }
     theta = function(ind) {
 	weights.jk = weights
-	if (!is.null(weights)) { weights.jk$omega = sum_normalize(weights$omega[ind[ind <= setup$N0]]) }
+	if (!is.null(weights)) {
+	  weights.jk$omega = sum_normalize(weights$omega[ind[ind <= setup$N0]])
+	  treated.ind = ind[ind > setup$N0]
+	  if (length(treated.ind) == 0) {
+	    weights.jk$omega_treated = weights$omega_treated
+	  } else {
+	    weights.jk$omega_treated = sum_normalize(weights$omega_treated[treated.ind - setup$N0])
+	  }
+	}
 	estimate.jk = do.call(synthdid_estimate,
 	    c(list(Y=setup$Y[ind, ], N0=sum(ind <= setup$N0), T0=setup$T0, X = setup$X[ind, , ], weights = weights.jk), opts))
     }
@@ -115,6 +129,12 @@ placebo_se = function(estimate, replications) {
 	N0 = length(ind)-N1
 	weights.boot = weights
 	weights.boot$omega = sum_normalize(weights$omega[ind[1:N0]])
+	treated.ind = ind[(N0 + 1):length(ind)]
+	if (length(treated.ind) == 0) {
+	  weights.boot$omega_treated = weights$omega_treated
+	} else {
+	  weights.boot$omega_treated = sum_normalize(weights$omega_treated[treated.ind - setup$N0])
+	}
         do.call(synthdid_estimate, c(list(Y=setup$Y[ind,], N0=N0,  T0=setup$T0,  X=setup$X[ind, ,], weights=weights.boot), opts))
     }
     sqrt((replications-1)/replications) * sd(replicate(replications, theta(sample(1:setup$N0))))
