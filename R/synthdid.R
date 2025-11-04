@@ -3,6 +3,35 @@
 #' @param v a vector
 sparsify_function = function(v) { v[v <= max(v)/4] = 0; v/sum(v) }
 
+normalize_target_weights = function(w, len, name) {
+  tol = sqrt(.Machine$double.eps)
+  if (len == 0) {
+    if (!is.null(w) && length(w) != 0) {
+      stop(sprintf('weights$%s must have length %d', name, len))
+    }
+    return(numeric(0))
+  }
+  if (is.null(w)) {
+    return(rep(1 / len, len))
+  }
+  if (length(w) != len) {
+    stop(sprintf('weights$%s must have length %d', name, len))
+  }
+  if (any(!is.finite(w))) {
+    stop(sprintf('weights$%s must contain only finite values', name))
+  }
+  if (any(w < -tol)) {
+    stop(sprintf('weights$%s must be nonnegative', name))
+  }
+  w[w < 0] = 0
+  sum_w = sum(w)
+  if (sum_w <= tol) {
+    stop(sprintf('weights$%s must sum to a positive value', name))
+  }
+  w = w / sum_w
+  as.numeric(w)
+}
+
 #' Computes the synthetic diff-in-diff estimate for an average treatment effect on a treated block.
 #'
 #' See 'Synthetic Difference in Differences' by Arkhangelsky et al. This implements Algorithm 1.
@@ -40,7 +69,7 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
                               eta.omega = ((nrow(Y)-N0)*(ncol(Y)-T0))^(1/4), eta.lambda = 1e-6,
                               zeta.omega  = eta.omega  * noise.level,  zeta.lambda = eta.lambda * noise.level,
                               omega.intercept = TRUE, lambda.intercept = TRUE,
-                              weights = list(omega = NULL, lambda = NULL),
+                              weights = list(omega = NULL, lambda = NULL, omega_treated = NULL, lambda_post = NULL),
                               update.omega = is.null(weights$omega), update.lambda = is.null(weights$lambda),
                               min.decrease = 1e-5 * noise.level, max.iter = 1e4,
 			      sparsify = sparsify_function,
@@ -52,6 +81,9 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
   if (is.null(sparsify)) { max.iter.pre.sparsify = max.iter }
   N1 = nrow(Y) - N0
   T1 = ncol(Y) - T0
+
+  weights$omega_treated = normalize_target_weights(weights$omega_treated, N1, 'omega_treated')
+  weights$lambda_post = normalize_target_weights(weights$lambda_post, T1, 'lambda_post')
 
   if (dim(X)[3] == 0) {
     weights$vals = NULL
