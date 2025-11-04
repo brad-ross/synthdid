@@ -316,9 +316,9 @@ synthdid_units_plot = function(estimates, negligible.threshold = .001, negligibl
     T0 = setup$T0; T1 = ncol(Y) - T0
 
     lambda.pre = c(weights$lambda, rep(0, T1))
-    lambda.post = c(rep(0, T0), rep(1 / T1, T1))
+    lambda.post = c(rep(0, T0), weights$lambda_post)
     omega.control = c(weights$omega, rep(0, N1))
-    omega.treat = c(rep(0, N0), rep(1 / N1, N1))
+    omega.treat = c(rep(0, N0), weights$omega_treated)
     difs = as.vector(t(omega.treat) %*% Y %*% (lambda.post - lambda.pre)) - as.vector(Y[1:N0, ] %*% (lambda.post - lambda.pre))
     se = if (se.method == 'none') { NA } else { sqrt(vcov(estimate, method=se.method)) }
     include.units = if(is.null(units)) { 1:N0 } else { which(rownames(Y)[1:N0] %in% units) }
