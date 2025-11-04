@@ -127,7 +127,9 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
   }
 
   X.beta = contract3(X, weights$beta)
-  estimate = t(c(-weights$omega, rep(1 / N1, N1))) %*% (Y - X.beta) %*% c(-weights$lambda, rep(1 / T1, T1))
+  omega.target = weights$omega_treated
+  lambda.target = weights$lambda_post
+  estimate = t(c(-weights$omega, omega.target)) %*% (Y - X.beta) %*% c(-weights$lambda, lambda.target)
 
   class(estimate) = 'synthdid_estimate'
   attr(estimate, 'estimator') = "synthdid_estimate"
