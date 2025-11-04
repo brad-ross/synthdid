@@ -24,6 +24,52 @@ test_that("plotting doesn't error with (i) dates as colnames (ii) spaghetti unit
   expect_equal(1, 1)
 })
 
+test_that("custom target weights are respected and propagate", {
+  Y = matrix(1:25, nrow = 5, byrow = TRUE)
+  rownames(Y) = sprintf('unit%02d', seq_len(nrow(Y)))
+  colnames(Y) = as.character(seq_len(ncol(Y)))
+  N0 = 3; T0 = 3
+  omega_controls = c(.5, .3, .2)
+  lambda_pre = c(.4, .35, .25)
+  omega_treated = c(.2, .8)
+  lambda_post = c(.3, .7)
+
+  estimate = synthdid_estimate(
+    Y, N0, T0,
+    weights = list(
+      omega = omega_controls,
+      lambda = lambda_pre,
+      omega_treated = omega_treated,
+      lambda_post = lambda_post
+    ),
+    update.omega = FALSE,
+    update.lambda = FALSE,
+    omega.intercept = FALSE,
+    lambda.intercept = FALSE,
+    sparsify = NULL
+  )
+
+  expected = t(c(-omega_controls, omega_treated)) %*% Y %*% c(-lambda_pre, lambda_post)
+  expect_equal(as.numeric(estimate), as.numeric(expected))
+
+  weights = attr(estimate, "weights")
+  expect_equal(weights$omega_treated, omega_treated)
+  expect_equal(weights$lambda_post, lambda_post)
+
+  tau_curve = synthdid_effect_curve(estimate)
+  tau_sc = as.numeric(t(c(-omega_controls, omega_treated)) %*% Y)
+  expected_curve = tau_sc[(T0 + 1):(T0 + length(lambda_post))] -
+    sum(tau_sc[1:T0] * lambda_pre)
+  expect_equal(as.numeric(tau_curve), expected_curve)
+
+  expect_error(synthdid_plot(estimate, se.method = "none"), NA)
+  expect_error(synthdid_units_plot(estimate, se.method = "none"), NA)
+
+  expect_error(vcov(estimate, method = "jackknife"), NA)
+  expect_error(vcov(estimate, method = "bootstrap", replications = 5), NA)
+  expect_error(vcov(estimate, method = "placebo", replications = 5), NA)
+})
+
 test_that("adjustment for covariates works: random noise less influential if passed as covariate", {
   setup = random.low.rank()
   X = setup$Y - setup$L
