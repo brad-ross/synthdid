@@ -79,6 +79,8 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
                               min.decrease = 1e-5 * noise.level, max.iter = 1e4,
 			      sparsify = sparsify_function,
 			      max.iter.pre.sparsify = 100) {
+  if (is.null(weights[['lambda']])) { update.lambda = TRUE }
+  if (is.null(weights[['omega']]))  { update.omega  = TRUE }
   stopifnot(nrow(Y) > N0, ncol(Y) > T0, length(dim(X)) %in% c(2, 3), dim(X)[1:2] == dim(Y), is.list(weights),
     is.null(weights[['lambda']]) || length(weights[['lambda']]) == T0, is.null(weights[['omega']]) || length(weights[['omega']]) == N0,
     !is.null(weights[['lambda']]) || update.lambda, !is.null(weights[['omega']]) || update.omega)
