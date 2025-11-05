@@ -75,13 +75,13 @@ synthdid_estimate <- function(Y, N0, T0, X = array(dim = c(dim(Y), 0)),
                               zeta.omega  = eta.omega  * noise.level,  zeta.lambda = eta.lambda * noise.level,
                               omega.intercept = TRUE, lambda.intercept = TRUE,
                               weights = list(omega = NULL, lambda = NULL, omega_treated = NULL, lambda_post = NULL),
-                              update.omega = is.null(weights$omega), update.lambda = is.null(weights$lambda),
+                              update.omega = is.null(weights[['omega']]), update.lambda = is.null(weights[['lambda']]),
                               min.decrease = 1e-5 * noise.level, max.iter = 1e4,
 			      sparsify = sparsify_function,
 			      max.iter.pre.sparsify = 100) {
   stopifnot(nrow(Y) > N0, ncol(Y) > T0, length(dim(X)) %in% c(2, 3), dim(X)[1:2] == dim(Y), is.list(weights),
-    is.null(weights$lambda) || length(weights$lambda) == T0, is.null(weights$omega) || length(weights$omega) == N0,
-    !is.null(weights$lambda) || update.lambda, !is.null(weights$omega) || update.omega)
+    is.null(weights[['lambda']]) || length(weights[['lambda']]) == T0, is.null(weights[['omega']]) || length(weights[['omega']]) == N0,
+    !is.null(weights[['lambda']]) || update.lambda, !is.null(weights[['omega']]) || update.omega)
   if (length(dim(X)) == 2) { dim(X) = c(dim(X), 1) }
   if (is.null(sparsify)) { max.iter.pre.sparsify = max.iter }
   N1 = nrow(Y) - N0
